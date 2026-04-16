@@ -6,12 +6,12 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AIService } from '@/api/ai-service';
-import type { AIConfig, FileContext } from '@/api/ai';
-import { loadAIConfig, saveAIConfig, modelOptions, defaultAIConfig } from '@/api/ai';
+import type { AIConfig, AIProvider, FileContext } from '@/api/ai';
+import { loadAIConfig, saveAIConfig, providerConfigs, getProviderModels, getProviderDefaultModel } from '@/api/ai';
 import { Bot, Settings, X, Loader2 } from 'lucide-react';
 
 export const AIPage: React.FC = () => {
-  const [config, setConfig] = useState<AIConfig>(defaultAIConfig);
+  const [config, setConfig] = useState<AIConfig>(loadAIConfig());
   const [aiService, setAiService] = useState<AIService | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showFileExplorer, setShowFileExplorer] = useState(false);
@@ -33,12 +33,14 @@ export const AIPage: React.FC = () => {
     setIsConnected(true);
   };
 
-  const handleConfigChange = (key: keyof AIConfig, value: string) => {
-    const newConfig = { ...config, [key]: value };
-    if (key === 'provider') {
-      newConfig.model = modelOptions[value].models[0];
-    }
-    setConfig(newConfig);
+  const handleProviderChange = (provider: AIProvider) => {
+    const defaultModel = getProviderDefaultModel(provider);
+    setConfig(prev => ({
+      ...prev,
+      provider,
+      model: defaultModel,
+      baseUrl: providerConfigs[provider]?.baseUrl || '',
+    }));
   };
 
   const handleSaveConfig = () => {
@@ -51,9 +53,11 @@ export const AIPage: React.FC = () => {
     setTestStatus('testing');
     try {
       const service = new AIService(config);
-      await service.sendMessage([
-        { id: '1', role: 'user', content: 'Hi', timestamp: Date.now() }
-      ], [], () => {});
+      await service.sendMessage(
+        [{ id: '1', role: 'user', content: 'Hi', timestamp: Date.now() }],
+        [],
+        () => {}
+      );
       setTestStatus('success');
       setTimeout(() => setTestStatus('idle'), 2000);
     } catch (error) {
@@ -70,6 +74,11 @@ export const AIPage: React.FC = () => {
   const handleClearContext = () => {
     setFileContext([]);
   };
+
+  const providers = Object.entries(providerConfigs).map(([key, val]) => ({
+    id: key as AIProvider,
+    name: val.name,
+  }));
 
   return (
     <div className="h-[calc(100vh-3.5rem)] flex flex-col">
@@ -111,11 +120,11 @@ export const AIPage: React.FC = () => {
                     <label className="text-xs font-medium mb-1.5 block">Provider</label>
                     <select
                       value={config.provider}
-                      onChange={e => handleConfigChange('provider', e.target.value)}
+                      onChange={e => handleProviderChange(e.target.value as AIProvider)}
                       className="w-full h-8 rounded-lg border border-[var(--input)] bg-[var(--background)] px-3 text-xs"
                     >
-                      {Object.entries(modelOptions).map(([key, val]) => (
-                        <option key={key} value={key}>{val.name}</option>
+                      {providers.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
                   </div>
@@ -124,10 +133,10 @@ export const AIPage: React.FC = () => {
                     <label className="text-xs font-medium mb-1.5 block">Model</label>
                     <select
                       value={config.model}
-                      onChange={e => handleConfigChange('model', e.target.value)}
+                      onChange={e => setConfig(prev => ({ ...prev, model: e.target.value }))}
                       className="w-full h-8 rounded-lg border border-[var(--input)] bg-[var(--background)] px-3 text-xs"
                     >
-                      {modelOptions[config.provider]?.models.map(m => (
+                      {getProviderModels(config.provider).map(m => (
                         <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
@@ -138,26 +147,25 @@ export const AIPage: React.FC = () => {
                     <Input
                       type="password"
                       value={config.apiKey}
-                      onChange={e => handleConfigChange('apiKey', e.target.value)}
-                      placeholder="sk-..."
+                      onChange={e => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      placeholder="sk-... or your API key"
                       className="h-9"
                     />
                   </div>
 
-                  {(config.provider === 'ollama' || config.provider === 'gemini') && (
-                    <div>
-                      <label className="text-xs font-medium mb-1.5 block">
-                        {config.provider === 'gemini' ? 'API Key' : 'Base URL'}
-                      </label>
-                      <Input
-                        type={config.provider === 'gemini' ? 'password' : 'text'}
-                        value={config.baseUrl || ''}
-                        onChange={e => handleConfigChange('baseUrl', e.target.value)}
-                        placeholder={config.provider === 'gemini' ? 'AIza...' : 'http://localhost:11434'}
-                        className="h-9"
-                      />
-                    </div>
-                  )}
+                  <div>
+                    <label className="text-xs font-medium mb-1.5 block">Base URL (Optional)</label>
+                    <Input
+                      type="text"
+                      value={config.baseUrl || ''}
+                      onChange={e => setConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                      placeholder={providerConfigs[config.provider]?.baseUrl || 'Leave empty for default'}
+                      className="h-9"
+                    />
+                    <p className="text-[10px] text-[var(--muted-foreground)] mt-1">
+                      Default: {providerConfigs[config.provider]?.baseUrl || 'None'}
+                    </p>
+                  </div>
 
                   <div className="flex items-center gap-2 pt-2">
                     <Button
