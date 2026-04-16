@@ -12,6 +12,7 @@ import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { MinecraftDashboard } from '@/pages/minecraft/MinecraftDashboard';
 import { CreateServer } from '@/pages/minecraft/CreateServer';
 import { ServerConsole } from '@/pages/minecraft/ServerConsole';
+import { AIPage } from '@/pages/ai/AIPage';
 import { getAuthToken } from '@/api/http';
 
 const queryClient = new QueryClient({
@@ -56,6 +57,7 @@ function App() {
             <Route path="minecraft" element={<MinecraftDashboard />} />
             <Route path="minecraft/create" element={<CreateServer />} />
             <Route path="minecraft/console/:id" element={<ServerConsole />} />
+            <Route path="ai" element={<AIPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
