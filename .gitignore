@@ -1,0 +1,56 @@
+# Dependencies
+theme/node_modules/
+panel/node_modules/
+panel/vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# Build outputs
+theme/dist/
+panel/public/assets/
+panel/storage/build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+*.cache
+.phpunit.result.cache
+
+# Panel specific
+panel/bootstrap/cache/
+panel/storage/*.key
+panel/storage/app/sessions/
+panel/storage/app/views/
+panel/storage/framework/
+panel/storage/logs/
+
+# Keys
+*.pem
+*.key
+
+# Composer
+composer.lock
+
+# Node
+yarn.lock
+package-lock.json
+
+# Build artifacts
+*.o
+*.so
