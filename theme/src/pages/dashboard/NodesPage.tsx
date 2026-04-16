@@ -16,59 +16,59 @@ export const NodesPage: React.FC = () => {
   return (
     <div>
       <Header title="Nodes" description="Manage your server nodes" />
-      <div className="p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-muted-foreground">Total: {nodes.length} nodes</p>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
+      <div className="p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-xs text-[var(--muted-foreground)]">Total: {nodes.length} nodes</p>
+          <Button size="sm">
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
             Add Node
           </Button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           {nodes.map((node) => (
-            <Card key={node.id} className="hover:border-primary/50 transition-colors">
+            <Card key={node.id} className="group hover:shadow-card-hover transition-all duration-200">
               <CardHeader className="flex flex-row items-start justify-between pb-2">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <HardDrive className="h-5 w-5 text-primary" />
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${node.status === 'online' ? 'bg-[var(--theme-primary)]/10' : 'bg-amber-100'}`}>
+                    <HardDrive className={`h-5 w-5 ${node.status === 'online' ? 'text-[var(--theme-primary)]' : 'text-amber-600'}`} />
                   </div>
                   <div>
-                    <CardTitle className="text-base">{node.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{node.location}</p>
+                    <CardTitle className="text-sm">{node.name}</CardTitle>
+                    <p className="text-[10px] text-[var(--muted-foreground)]">{node.location}</p>
                   </div>
                 </div>
-                <Badge variant={node.status === 'online' ? 'success' : node.status === 'maintenance' ? 'warning' : 'destructive'}>
+                <Badge variant={node.status === 'online' ? 'success' : 'warning'}>
                   {node.status}
                 </Badge>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Servers</span>
-                    <span className="font-medium">{node.servers}</span>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[var(--muted-foreground)]">Servers</span>
+                    <span className="font-semibold text-[var(--foreground)]">{node.servers}</span>
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-muted-foreground">Memory</span>
-                      <span className="font-medium">{node.memory}%</span>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-[var(--muted-foreground)]">Memory</span>
+                      <span className="font-semibold text-[var(--foreground)]">{node.memory}%</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-muted">
+                    <div className="h-1.5 bg-[var(--secondary)] rounded-full overflow-hidden">
                       <div 
-                        className={`h-1.5 rounded-full ${node.memory > 80 ? 'bg-red-500' : node.memory > 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                        style={{ width: `${node.memory}%` }}
+                        className="h-full rounded-full transition-all duration-300 bg-gradient-to-r from-[var(--theme-button-primary)] to-[var(--theme-button-secondary)]"
+                        style={{ width: node.memory + '%' }}
                       />
                     </div>
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-muted-foreground">CPU</span>
-                      <span className="font-medium">{node.cpu}%</span>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-[var(--muted-foreground)]">CPU</span>
+                      <span className="font-semibold text-[var(--foreground)]">{node.cpu}%</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-muted">
+                    <div className="h-1.5 bg-[var(--secondary)] rounded-full overflow-hidden">
                       <div 
-                        className={`h-1.5 rounded-full ${node.cpu > 80 ? 'bg-red-500' : node.cpu > 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                        style={{ width: `${node.cpu}%` }}
+                        className="h-full rounded-full transition-all duration-300 bg-gradient-to-r from-[var(--theme-button-primary)] to-[var(--theme-button-secondary)]"
+                        style={{ width: node.cpu + '%' }}
                       />
                     </div>
                   </div>

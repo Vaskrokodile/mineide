@@ -9,7 +9,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={clsx(
-          'rounded-lg border bg-card text-card-foreground shadow-sm',
+          'rounded-lg border border-[var(--border)] bg-[var(--card)] shadow-card transition-all duration-200 hover:shadow-card-hover',
           className
         )}
         {...props}
@@ -23,19 +23,19 @@ export const CardHeader = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={clsx('flex flex-col space-y-1.5 p-6', className)}
+        className={clsx('p-4 pb-3', className)}
         {...props}
       />
     );
   }
 );
 
-export const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+export const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => {
     return (
       <h3
         ref={ref}
-        className={clsx('text-2xl font-semibold leading-none tracking-tight', className)}
+        className={clsx('text-base font-semibold text-[var(--card-foreground)]', className)}
         {...props}
       />
     );
@@ -47,7 +47,7 @@ export const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTML
     return (
       <p
         ref={ref}
-        className={clsx('text-sm text-muted-foreground', className)}
+        className={clsx('text-xs text-[var(--muted-foreground)] mt-0.5', className)}
         {...props}
       />
     );
@@ -56,7 +56,7 @@ export const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTML
 
 export const CardContent = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, ...props }, ref) => {
-    return <div ref={ref} className={clsx('p-6 pt-0', className)} {...props} />;
+    return <div ref={ref} className={clsx('p-4 pt-0', className)} {...props} />;
   }
 );
 
@@ -65,7 +65,7 @@ export const CardFooter = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={clsx('flex items-center p-6 pt-0', className)}
+        className={clsx('flex items-center p-4 pt-0', className)}
         {...props}
       />
     );

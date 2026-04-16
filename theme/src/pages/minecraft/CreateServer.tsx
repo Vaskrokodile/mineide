@@ -83,7 +83,7 @@ export const CreateServer: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      i <= step ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                      i <= step ? 'bg-[var(--theme-primary)] text-white' : 'bg-[var(--secondary)]'
                     }`}
                   >
                     <s.icon className="h-5 w-5" />
@@ -91,7 +91,7 @@ export const CreateServer: React.FC = () => {
                   <span className="text-xs mt-1 hidden sm:block">{s.title}</span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={`flex-1 h-1 mx-2 ${i < step ? 'bg-primary' : 'bg-muted'}`} />
+                  <div className={`flex-1 h-1 mx-2 ${i < step ? 'bg-[var(--theme-primary)]' : 'bg-[var(--secondary)]'}`} />
                 )}
               </React.Fragment>
             ))}
@@ -163,12 +163,12 @@ export const CreateServer: React.FC = () => {
                       <div
                         key={type.id}
                         className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                          config.type === type.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                          config.type === type.id ? 'border-[var(--theme-primary)] bg-[var(--theme-primary)]/5' : 'border-[var(--border)] hover:border-[var(--theme-primary)]/50'
                         }`}
                         onClick={() => updateConfig('type', type.id)}
                       >
                         <p className="font-medium">{type.name}</p>
-                        <p className="text-sm text-muted-foreground">{type.description}</p>
+                        <p className="text-sm text-[var(--muted-foreground)]">{type.description}</p>
                       </div>
                     ))}
                   </div>
@@ -176,7 +176,7 @@ export const CreateServer: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Minecraft Version</label>
                   <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
                     value={config.version}
                     onChange={(e) => updateConfig('version', e.target.value)}
                   >
@@ -194,7 +194,7 @@ export const CreateServer: React.FC = () => {
                     min={512}
                     max={16384}
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[var(--muted-foreground)]">
                     Recommended: 2048MB for vanilla, 4096MB+ for modded
                   </p>
                 </div>
@@ -206,7 +206,7 @@ export const CreateServer: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Difficulty</label>
                   <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
                     value={config.difficulty}
                     onChange={(e) => updateConfig('difficulty', e.target.value)}
                   >
@@ -237,11 +237,11 @@ export const CreateServer: React.FC = () => {
                     ].map((opt) => (
                       <label
                         key={opt.key}
-                        className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-accent"
+                        className="flex items-center justify-between p-3 rounded-lg border border-[var(--border)] cursor-pointer hover:bg-[var(--secondary)]"
                       >
                         <div>
-                          <p className="font-medium">{opt.label}</p>
-                          <p className="text-sm text-muted-foreground">{opt.desc}</p>
+                          <p className="font-medium text-[var(--foreground)]">{opt.label}</p>
+                          <p className="text-sm text-[var(--muted-foreground)]">{opt.desc}</p>
                         </div>
                         <input
                           type="checkbox"
@@ -267,15 +267,15 @@ export const CreateServer: React.FC = () => {
                     min={4}
                     max={32}
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[var(--muted-foreground)]">
                     Higher values show more terrain but use more RAM
                   </p>
                 </div>
                 <div className="space-y-3">
-                  <label className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-accent">
+                  <label className="flex items-center justify-between p-3 rounded-lg border border-[var(--border)] cursor-pointer hover:bg-[var(--secondary)]">
                     <div>
-                      <p className="font-medium">Online Mode</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-[var(--foreground)]">Online Mode</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">
                         Require players to have a legitimate Minecraft account
                       </p>
                     </div>

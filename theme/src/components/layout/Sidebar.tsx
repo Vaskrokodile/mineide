@@ -9,7 +9,6 @@ import {
   HardDrive,
   Settings,
   LogOut,
-  ChevronRight,
   Box,
 } from 'lucide-react';
 
@@ -27,16 +26,21 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-card">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-56 bg-[var(--card)] border-r border-[var(--border)]">
       <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center border-b border-border px-6">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary" />
-            <span className="text-lg font-bold">PteroPanel</span>
+        <div className="flex h-14 items-center border-b border-[var(--border)] px-5">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[var(--theme-button-primary)] to-[var(--theme-button-secondary)] flex items-center justify-center shadow-md shadow-[var(--theme-button-primary)]/20">
+              <span className="text-white font-bold text-sm">M</span>
+            </div>
+            <div>
+              <span className="text-base font-semibold text-[var(--card-foreground)]">MineIDE</span>
+              <p className="text-[10px] text-[var(--theme-primary)] font-medium">Panel</p>
+            </div>
           </div>
         </div>
 
-        <nav className="flex-1 space-y-1 p-4">
+        <nav className="flex-1 space-y-0.5 p-2">
           {navItems.map((item) => {
             const isActive = location.pathname.startsWith(item.to);
             return (
@@ -44,23 +48,22 @@ export const Sidebar: React.FC = () => {
                 key={item.to}
                 to={item.to}
                 className={clsx(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  'flex items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition-all duration-150',
                   isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    ? 'bg-gradient-to-r from-[var(--theme-button-primary)] to-[var(--theme-button-secondary)] text-white shadow-md shadow-[var(--theme-button-primary)]/20'
+                    : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--secondary-foreground)]'
                 )}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className={clsx('h-4 w-4', isActive ? 'text-white' : 'text-[var(--muted-foreground)]')} />
                 {item.label}
-                {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
               </NavLink>
             );
           })}
         </nav>
 
-        <div className="border-t border-border p-4">
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
-            <LogOut className="h-5 w-5" />
+        <div className="border-t border-[var(--border)] p-2">
+          <button className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium text-[var(--muted-foreground)] transition-colors hover:bg-[var(--secondary)] hover:text-[var(--secondary-foreground)]">
+            <LogOut className="h-4 w-4 text-[var(--muted-foreground)]" />
             Logout
           </button>
         </div>

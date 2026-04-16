@@ -16,33 +16,33 @@ export const LocationsPage: React.FC = () => {
   return (
     <div>
       <Header title="Locations" description="Manage server locations" />
-      <div className="p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-muted-foreground">Total: {locations.length} locations</p>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
+      <div className="p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-xs text-[var(--muted-foreground)]">Total: {locations.length} locations</p>
+          <Button size="sm">
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
             Add Location
           </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {locations.map((location) => (
-            <Card key={location.id} className="hover:border-primary/50 transition-colors">
+            <Card key={location.id} className="hover:border-[var(--theme-primary)]/50 transition-colors">
               <CardHeader className="pb-2">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-accent p-2">
-                    <Globe className="h-5 w-5 text-accent-foreground" />
+                <div className="flex items-center gap-2">
+                  <div className="rounded-md bg-[var(--secondary)] p-1.5">
+                    <Globe className="h-4 w-4 text-[var(--foreground)]" />
                   </div>
                   <div>
-                    <CardTitle className="text-base">{location.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{location.description}</p>
+                    <CardTitle className="text-sm">{location.name}</CardTitle>
+                    <p className="text-[10px] text-[var(--muted-foreground)]">{location.description}</p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Server className="h-4 w-4" />
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-[var(--muted-foreground)]">
+                    <Server className="h-3 w-3" />
                     <span>{location.servers} servers</span>
                   </div>
                   <Badge variant="secondary">{location.nodes} nodes</Badge>

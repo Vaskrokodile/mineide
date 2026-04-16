@@ -191,10 +191,10 @@ export const ServerConsole: React.FC = () => {
           <CardContent className="space-y-4">
             <div
               ref={consoleRef}
-              className="h-96 bg-black rounded-lg p-4 font-mono text-sm overflow-y-auto"
+              className="h-96 bg-[var(--background)] rounded-lg p-4 font-mono text-sm overflow-y-auto border border-[var(--border)]"
             >
               {consoleOutput.length === 0 ? (
-                <p className="text-gray-500">
+                <p className="text-[var(--muted-foreground)]">
                   {server.status === 'running'
                     ? 'Waiting for output...'
                     : 'Server is offline. Start the server to see console output.'}
@@ -230,7 +230,7 @@ export const ServerConsole: React.FC = () => {
                 <Button type="submit">Send</Button>
               </form>
             ) : (
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-sm text-[var(--muted-foreground)] text-center">
                 Start the server to send commands
               </p>
             )}
@@ -244,19 +244,19 @@ export const ServerConsole: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Version</span>
+                <span className="text-[var(--muted-foreground)]">Version</span>
                 <span>{server.version}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Type</span>
+                <span className="text-[var(--muted-foreground)]">Type</span>
                 <span className="capitalize">{server.type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">RAM</span>
+                <span className="text-[var(--muted-foreground)]">RAM</span>
                 <span>{server.ram}MB</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Max Players</span>
+                <span className="text-[var(--muted-foreground)]">Max Players</span>
                 <span>{server.maxPlayers}</span>
               </div>
             </CardContent>
@@ -268,19 +268,19 @@ export const ServerConsole: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Difficulty</span>
+                <span className="text-[var(--muted-foreground)]">Difficulty</span>
                 <span className="capitalize">{server.difficulty}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">PvP</span>
+                <span className="text-[var(--muted-foreground)]">PvP</span>
                 <span>{server.pvp ? 'Enabled' : 'Disabled'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Whitelist</span>
+                <span className="text-[var(--muted-foreground)]">Whitelist</span>
                 <span>{server.whitelist ? 'Enabled' : 'Disabled'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Online Mode</span>
+                <span className="text-[var(--muted-foreground)]">Online Mode</span>
                 <span>{server.onlineMode ? 'Enabled' : 'Disabled'}</span>
               </div>
             </CardContent>

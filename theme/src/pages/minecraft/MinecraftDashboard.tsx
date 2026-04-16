@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
 import { minecraftApi } from '@/api/minecraft';
 import type { MinecraftServer } from '@/api/minecraft';
-import { Plus, Server, Play, Square, Trash2, Settings, RefreshCw } from 'lucide-react';
+import { Plus, Server, Play, Square, Trash2, Settings, RefreshCw, Box } from 'lucide-react';
 
 export const MinecraftDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -67,7 +67,7 @@ export const MinecraftDashboard: React.FC = () => {
   if (loading) {
     return (
       <div>
-        <Header title="Minecraft" description="Manage your local Minecraft servers" />
+        <Header title="Minecraft" description="Create and manage local Minecraft servers" />
         <div className="flex items-center justify-center p-12">
           <Spinner size="lg" />
         </div>
@@ -77,10 +77,12 @@ export const MinecraftDashboard: React.FC = () => {
 
   return (
     <div>
-      <Header title="Minecraft" description="Manage your local Minecraft servers" />
-      <div className="p-6 space-y-6">
+      <Header title="Minecraft" description="Create and manage local Minecraft servers" />
+      <div className="p-8 space-y-6">
         <div className="flex items-center justify-between">
-          <p className="text-muted-foreground">{servers.length} server(s)</p>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-[var(--muted-foreground)]">{servers.length} server(s)</span>
+          </div>
           <Button onClick={() => navigate('/minecraft/create')}>
             <Plus className="mr-2 h-4 w-4" />
             Create Server
@@ -88,12 +90,14 @@ export const MinecraftDashboard: React.FC = () => {
         </div>
 
         {servers.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Server className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg font-medium mb-2">No servers yet</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Create your first Minecraft server to get started
+          <Card className="border-dashed border-2 border-[var(--border)]">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="h-20 w-20 rounded-2xl bg-[var(--theme-primary)]/10 flex items-center justify-center mb-6">
+                <Box className="h-10 w-10 text-[var(--theme-primary)]" />
+              </div>
+              <p className="text-xl font-bold text-[var(--foreground)] mb-2">No servers yet</p>
+              <p className="text-sm text-[var(--muted-foreground)] mb-6 text-center max-w-sm">
+                Create your first Minecraft server to start playing with friends
               </p>
               <Button onClick={() => navigate('/minecraft/create')}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -102,42 +106,42 @@ export const MinecraftDashboard: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {servers.map((server) => (
-              <Card key={server.id} className="hover:border-primary/50 transition-colors">
-                <CardHeader className="flex flex-row items-start justify-between pb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-green-500/10 p-2">
-                      <Server className="h-5 w-5 text-green-500" />
+              <Card key={server.id} className="group hover:shadow-card-hover transition-all duration-300 overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${server.status === 'running' ? 'bg-[var(--theme-primary)]/10' : 'bg-[var(--secondary)]'}`}>
+                        <Server className={`h-6 w-6 ${server.status === 'running' ? 'text-[var(--theme-primary)]' : 'text-[var(--muted-foreground)]'}`} />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">{server.name}</CardTitle>
+                        <p className="text-sm text-[var(--muted-foreground)]">{server.version} - {server.type}</p>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-base">{server.name}</CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        {server.version} - {server.type}
-                      </p>
-                    </div>
+                    <Badge variant={server.status === 'running' ? 'success' : 'secondary'}>
+                      {server.status}
+                    </Badge>
                   </div>
-                  <Badge variant={server.status === 'running' ? 'success' : 'default'}>
-                    {server.status}
-                  </Badge>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Port</span>
-                      <span className="font-medium">{server.port}</span>
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    <div className="p-3 rounded-xl bg-[var(--secondary)]">
+                      <p className="text-xs text-[var(--muted-foreground)] mb-1">Port</p>
+                      <p className="font-bold text-[var(--foreground)]">{server.port}</p>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Max Players</span>
-                      <span className="font-medium">{server.maxPlayers}</span>
+                    <div className="p-3 rounded-xl bg-[var(--secondary)]">
+                      <p className="text-xs text-[var(--muted-foreground)] mb-1">Max Players</p>
+                      <p className="font-bold text-[var(--foreground)]">{server.maxPlayers}</p>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">RAM</span>
-                      <span className="font-medium">{server.ram}MB</span>
+                    <div className="p-3 rounded-xl bg-[var(--secondary)]">
+                      <p className="text-xs text-[var(--muted-foreground)] mb-1">RAM</p>
+                      <p className="font-bold text-[var(--foreground)]">{server.ram}MB</p>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Difficulty</span>
-                      <span className="font-medium capitalize">{server.difficulty}</span>
+                    <div className="p-3 rounded-xl bg-[var(--secondary)]">
+                      <p className="text-xs text-[var(--muted-foreground)] mb-1">Difficulty</p>
+                      <p className="font-bold text-[var(--foreground)] capitalize">{server.difficulty}</p>
                     </div>
                   </div>
 
@@ -176,6 +180,7 @@ export const MinecraftDashboard: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => navigate(`/minecraft/console/${server.id}`)}
+                      className="hover:bg-[var(--theme-primary)]/10"
                     >
                       <Settings className="h-4 w-4" />
                     </Button>
@@ -183,8 +188,9 @@ export const MinecraftDashboard: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(server.id)}
+                      className="hover:bg-red-50"
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
                 </CardContent>
