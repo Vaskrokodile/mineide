@@ -30,6 +30,29 @@ app.use(express.json());
 const servers = new Map();
 const consoleOutputs = new Map();
 const downloadProgress = new Map();
+const sessions = new Map();
+
+const DEFAULT_ADMIN = { username: 'admin', password: 'admin123' };
+
+function generateToken() {
+  return uuidv4();
+}
+
+function authMiddleware(req, res, next) {
+  const token = req.headers['x-session-token'];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'No session token provided' });
+  }
+  
+  const session = sessions.get(token);
+  if (!session) {
+    return res.status(401).json({ error: 'Invalid or expired session' });
+  }
+  
+  req.session = session;
+  next();
+}
 
 const MINECRAFT_VERSIONS = [
   { id: '1.21.4', name: 'Minecraft 1.21.4', type: 'release' },
@@ -163,42 +186,50 @@ async function downloadServerJar(serverId, version, type) {
   if (!fs.existsSync(jarPath)) {
     let downloadUrl;
     if (type === 'paper') {
-      const paperVersion = version.split('.')[0] + '.' + version.split('.')[1];
-      downloadUrl = `https://api.papermc.io/v3/projects/paper/versions/${paperVersion}/builds/latest/downloads/paper-${version}-latest.jar`;
+      const majorVersion = version.split('.')[1] || version.split('.')[0];
+      downloadUrl = `https://api.papermc.io/v2/projects/paper/versions/${version}/builds/latest/downloads/paper-${version}-${majorVersion}.jar`;
+    } else if (type === 'vanilla') {
+      downloadUrl = `https://piston-data.mojang.com/v1/objects/14556eb1c5f227a5e4b2d2c8e3f3e5c8d0a7b6c5/server.jar`;
     } else {
-      downloadUrl = `https://launcher.mojang.com/mc/game/version/${version}/server/6a0d9bb71f2f74c3828c4a2d58c0fb5b2c3d9e1a/server.jar`;
+      downloadUrl = `https://piston-data.mojang.com/v1/objects/14556eb1c5f227a5e4b2d2c8e3f3e5c8d0a7b6c5/server.jar`;
     }
     
-    console.log(`Downloading ${type} ${version}...`);
-    const response = await fetch(downloadUrl);
-    if (!response.ok) throw new Error(`Failed to download: ${response.statusText}`);
+    console.log(`Downloading ${type} ${version} from ${downloadUrl}...`);
     
-    const total = parseInt(response.headers.get('content-length') || '0');
-    let downloaded = 0;
-    const chunks = [];
-    
-    response.body.on('data', (chunk) => {
-      chunks.push(chunk);
-      downloaded += chunk.length;
-      if (total) {
-        downloadProgress.set(serverId, Math.round((downloaded / total) * 100));
-      }
-    });
-    
-    await new Promise((resolve, reject) => {
-      response.body.on('end', resolve);
-      response.body.on('error', reject);
-    });
-    
-    const buffer = Buffer.concat(chunks);
-    fs.writeFileSync(jarPath, buffer);
-    downloadProgress.delete(serverId);
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error(`Failed to download: ${response.statusText} (${downloadUrl})`);
+      
+      const total = parseInt(response.headers.get('content-length') || '0');
+      let downloaded = 0;
+      const chunks = [];
+      
+      response.body.on('data', (chunk) => {
+        chunks.push(chunk);
+        downloaded += chunk.length;
+        if (total) {
+          downloadProgress.set(serverId, Math.round((downloaded / total) * 100));
+        }
+      });
+      
+      await new Promise((resolve, reject) => {
+        response.body.on('end', resolve);
+        response.body.on('error', reject);
+      });
+      
+      const buffer = Buffer.concat(chunks);
+      fs.writeFileSync(jarPath, buffer);
+      downloadProgress.delete(serverId);
+      console.log(`Downloaded ${jarPath} (${buffer.length} bytes)`);
+    } catch (err) {
+      console.error(`Download failed: ${err.message}`);
+      throw err;
+    }
   }
   
   return jarPath;
 }
 
-// Routes
 app.get('/api/versions', (req, res) => {
   res.json(MINECRAFT_VERSIONS);
 });
@@ -207,7 +238,7 @@ app.get('/api/server-types', (req, res) => {
   res.json(SERVER_TYPES);
 });
 
-app.get('/api/servers', (req, res) => {
+app.get('/api/servers', authMiddleware, (req, res) => {
   const serverList = [];
   const dirs = fs.readdirSync(SERVERS_DIR);
   
@@ -230,7 +261,7 @@ app.get('/api/servers', (req, res) => {
   res.json(serverList);
 });
 
-app.post('/api/servers', async (req, res) => {
+app.post('/api/servers', authMiddleware, async (req, res) => {
   try {
     const { name, version, type, port, maxPlayers, difficulty, pvp, whitelist, allowFlight, spawnAnimals, spawnMonsters, spawnNpcs, viewDistance, seed, motd, onlineMode, ram } = req.body;
     
@@ -280,7 +311,7 @@ app.post('/api/servers', async (req, res) => {
   }
 });
 
-app.get('/api/servers/:id', (req, res) => {
+app.get('/api/servers/:id', authMiddleware, (req, res) => {
   const { id } = req.params;
   const serverPath = path.join(SERVERS_DIR, id);
   const configPath = path.join(serverPath, 'config.json');
@@ -312,7 +343,7 @@ app.get('/api/servers/:id', (req, res) => {
   });
 });
 
-app.post('/api/servers/:id/start', (req, res) => {
+app.post('/api/servers/:id/start', authMiddleware, (req, res) => {
   const { id } = req.params;
   const serverPath = path.join(SERVERS_DIR, id);
   const configPath = path.join(serverPath, 'config.json');
@@ -375,7 +406,7 @@ app.post('/api/servers/:id/start', (req, res) => {
   res.json({ status: 'starting' });
 });
 
-app.post('/api/servers/:id/stop', (req, res) => {
+app.post('/api/servers/:id/stop', authMiddleware, (req, res) => {
   const { id } = req.params;
   
   if (!servers.has(id)) {
@@ -394,7 +425,7 @@ app.post('/api/servers/:id/stop', (req, res) => {
   res.json({ status: 'stopping' });
 });
 
-app.post('/api/servers/:id/restart', (req, res) => {
+app.post('/api/servers/:id/restart', authMiddleware, (req, res) => {
   const { id } = req.params;
   
   if (servers.has(id)) {
@@ -443,7 +474,7 @@ app.post('/api/servers/:id/restart', (req, res) => {
   res.json({ status: 'restarting' });
 });
 
-app.post('/api/servers/:id/command', (req, res) => {
+app.post('/api/servers/:id/command', authMiddleware, (req, res) => {
   const { id } = req.params;
   const { command } = req.body;
   
@@ -457,7 +488,7 @@ app.post('/api/servers/:id/command', (req, res) => {
   res.json({ sent: true });
 });
 
-app.get('/api/servers/:id/console', (req, res) => {
+app.get('/api/servers/:id/console', authMiddleware, (req, res) => {
   const { id } = req.params;
   
   if (!consoleOutputs.has(id)) {
@@ -474,12 +505,12 @@ app.get('/api/servers/:id/console', (req, res) => {
   });
 });
 
-app.get('/api/servers/:id/download-progress', (req, res) => {
+app.get('/api/servers/:id/download-progress', authMiddleware, (req, res) => {
   const { id } = req.params;
   res.json({ progress: downloadProgress.get(id) || 0 });
 });
 
-app.put('/api/servers/:id/config', (req, res) => {
+app.put('/api/servers/:id/config', authMiddleware, (req, res) => {
   const { id } = req.params;
   const serverPath = path.join(SERVERS_DIR, id);
   const configPath = path.join(serverPath, 'config.json');
@@ -497,7 +528,7 @@ app.put('/api/servers/:id/config', (req, res) => {
   res.json({ success: true });
 });
 
-app.delete('/api/servers/:id', (req, res) => {
+app.delete('/api/servers/:id', authMiddleware, (req, res) => {
   const { id } = req.params;
   
   if (servers.has(id)) {
@@ -512,7 +543,7 @@ app.delete('/api/servers/:id', (req, res) => {
   res.json({ deleted: true });
 });
 
-app.post('/api/servers/:id/backup', (req, res) => {
+app.post('/api/servers/:id/backup', authMiddleware, (req, res) => {
   const { id } = req.params;
   const serverPath = path.join(SERVERS_DIR, id);
   const backupPath = path.join(BACKUPS_DIR, `${id}-${Date.now()}.zip`);
@@ -539,7 +570,7 @@ app.post('/api/servers/:id/backup', (req, res) => {
   });
 });
 
-app.get('/api/servers/:id/files', (req, res) => {
+app.get('/api/servers/:id/files', authMiddleware, (req, res) => {
   const { id } = req.params;
   const serverPath = path.join(SERVERS_DIR, id);
   
@@ -569,7 +600,7 @@ app.get('/api/servers/:id/files', (req, res) => {
   res.json(files);
 });
 
-app.get('/api/servers/:id/plugins', (req, res) => {
+app.get('/api/servers/:id/plugins', authMiddleware, (req, res) => {
   const { id } = req.params;
   const serverPath = path.join(SERVERS_DIR, id);
   const pluginsPath = path.join(serverPath, 'plugins');
@@ -589,7 +620,7 @@ app.get('/api/servers/:id/plugins', (req, res) => {
   res.json(plugins);
 });
 
-app.post('/api/servers/:id/plugins', (req, res) => {
+app.post('/api/servers/:id/plugins', authMiddleware, (req, res) => {
   const { id } = req.params;
   const { pluginUrl, pluginName } = req.body;
   
@@ -609,10 +640,45 @@ app.post('/api/servers/:id/plugins', (req, res) => {
   res.json({ installed: filename });
 });
 
-// Health check
+// Auth endpoints
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password required' });
+  }
+  
+  if (username !== DEFAULT_ADMIN.username || password !== DEFAULT_ADMIN.password) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  
+  const token = generateToken();
+  sessions.set(token, {
+    username,
+    createdAt: Date.now()
+  });
+  
+  res.json({ token, username });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  const token = req.headers['x-session-token'];
+  if (token) {
+    sessions.delete(token);
+  }
+  res.json({ success: true });
+});
+
+app.get('/api/auth/verify', authMiddleware, (req, res) => {
+  res.json({ valid: true, username: req.session.username });
+});
+
+// Health check (no auth required)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', servers: servers.size });
 });
+
+// Protected routes below
 
 const httpServer = createServer(app);
 const wss = new WebSocketServer({ server: httpServer });
