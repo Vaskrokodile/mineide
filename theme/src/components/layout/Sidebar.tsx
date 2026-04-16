@@ -29,10 +29,7 @@ export const Sidebar: React.FC = () => {
     <aside className="fixed left-0 top-0 z-40 h-screen w-56 bg-[var(--card)] border-r border-[var(--border)]">
       <div className="flex h-full flex-col">
         <div className="flex h-14 items-center border-b border-[var(--border)] px-5">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[var(--theme-button-primary)] to-[var(--theme-button-secondary)] flex items-center justify-center shadow-md shadow-[var(--theme-button-primary)]/20">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
+          <div className="flex items-center gap-2">
             <div>
               <span className="text-base font-semibold text-[var(--card-foreground)]">MineIDE</span>
               <p className="text-[10px] text-[var(--theme-primary)] font-medium">Panel</p>
