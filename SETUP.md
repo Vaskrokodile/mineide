@@ -58,7 +58,6 @@ cd panel
 
 # Copy environment file
 cp .env.example .env
-# OR for quick setup, copy from below and edit credentials
 
 # Generate application key
 php artisan key:generate
@@ -76,21 +75,31 @@ php artisan p:user:make
 
 ## Step 5: Generate Pterodactyl API Key
 
-The application API key is required for the theme to authenticate. Generate it:
+The theme needs an API key to communicate with Pterodactyl. Generate one using Laravel tinker:
 
 ```bash
 php artisan tinker
 ```
 
-Then run this in the tinker shell (replace `admin@example.com` with your admin email):
+Then run these commands in the tinker shell (replace `admin@localhost` with your admin email):
 
 ```php
-$user = \Pterodactyl\Models\User::where('email', 'admin@example.com')->first();
-$token = $user->createToken('MineIDE', ['*']);
-echo $token->plainTextToken;
+// Create the token
+$user = \Pterodactyl\Models\User::where('email', 'admin@localhost')->first();
+$token = $user->createToken('MineIDE', null);
+$plainToken = $token->plainTextToken;
+
+// Get the identifier from the database
+$apiKey = \Pterodactyl\Models\ApiKey::where('user_id', $user->id)
+    ->where('memo', 'MineIDE')
+    ->orderBy('id', 'desc')
+    ->first();
+
+// Output the FULL API key (identifier + token)
+echo "Full API Key: " . $apiKey->identifier . $plainToken . "\n";
 ```
 
-Copy the token (format: `ptlc_...`). You'll use it in the theme setup.
+**Important:** The full API key format is `ptlc_identifier_randomtoken` - you need BOTH parts.
 
 ## Step 6: Configure Theme Environment
 
@@ -101,11 +110,12 @@ cd ../theme
 cp .env.example .env
 ```
 
-Edit `.env`:
+Edit `.env` with your values:
+
 ```env
 VITE_PTERODACTYL_URL=http://localhost:8000
 VITE_MINECRAFT_API_URL=http://localhost:3001
-VITE_PTERODACTYL_API_KEY=ptlc_your_token_here
+VITE_PTERODACTYL_API_KEY=ptlc_your_full_api_key_here
 ```
 
 ## Step 7: Build Theme
@@ -130,11 +140,11 @@ cd panel
 php artisan serve --port=8000
 
 # Terminal 2: Minecraft Service
-cd minecraft-service
+cd ../minecraft-service
 npm start
 
 # Terminal 3: Theme (Vite dev server)
-cd theme
+cd ../theme
 npm run dev
 ```
 
@@ -177,9 +187,14 @@ brew services restart mysql
 ```
 
 ### Theme shows "Invalid API key"
-- Make sure you generated the token using `createToken()` method
-- Verify `VITE_PTERODACTYL_API_KEY` in theme/.env matches
-- Check Pterodactyl is running on port 8000
+1. Make sure you generated the token using the tinker command above
+2. Verify you used the FULL API key (identifier + token), not just the plainTextToken
+3. Verify `VITE_PTERODACTYL_API_KEY` in theme/.env matches the full key
+4. Check Pterodactyl is running on port 8000
+5. Make sure your admin user has `root_admin = true`
+
+### API returns "This account does not have permission to access the API"
+Only admin users (root_admin) can access the application API. Make sure your admin user has admin privileges.
 
 ## Project Structure
 
