@@ -9,6 +9,8 @@ import archiver from 'archiver';
 import unzipper from 'unzipper';
 import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';
+import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -201,7 +203,6 @@ async function downloadServerJar(serverId, version, type) {
   const jarPath = path.join(CACHE_DIR, `${type}-${version}.jar`);
   
   if (!fs.existsSync(jarPath)) {
-<<<<<<< HEAD
     const downloadUrl = await getJarUrl(version, type);
     
     if (!downloadUrl) {
@@ -209,71 +210,27 @@ async function downloadServerJar(serverId, version, type) {
     }
     
     console.log(`Downloading ${type} ${version} from ${downloadUrl}...`);
-    const response = await fetch(downloadUrl);
-    if (!response.ok) throw new Error(`Failed to download from ${downloadUrl}: ${response.statusText}`);
-    
-    const total = parseInt(response.headers.get('content-length') || '0');
-    let downloaded = 0;
-    
-    const fileStream = fs.createWriteStream(jarPath);
-    const reader = response.body.getReader();
-    
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      fileStream.write(value);
-      downloaded += value.length;
-      if (total) {
-        downloadProgress.set(serverId, Math.round((downloaded / total) * 100));
-      }
-    }
-    
-    fileStream.end();
-    downloadProgress.delete(serverId);
-=======
-    let downloadUrl;
-    if (type === 'paper') {
-      const majorVersion = version.split('.')[1] || version.split('.')[0];
-      downloadUrl = `https://api.papermc.io/v2/projects/paper/versions/${version}/builds/latest/downloads/paper-${version}-${majorVersion}.jar`;
-    } else if (type === 'vanilla') {
-      downloadUrl = `https://piston-data.mojang.com/v1/objects/14556eb1c5f227a5e4b2d2c8e3f3e5c8d0a7b6c5/server.jar`;
-    } else {
-      downloadUrl = `https://piston-data.mojang.com/v1/objects/14556eb1c5f227a5e4b2d2c8e3f3e5c8d0a7b6c5/server.jar`;
-    }
-    
-    console.log(`Downloading ${type} ${version} from ${downloadUrl}...`);
     
     try {
       const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error(`Failed to download: ${response.statusText} (${downloadUrl})`);
+      if (!response.ok) throw new Error(`Failed to download from ${downloadUrl}: ${response.statusText}`);
       
-      const total = parseInt(response.headers.get('content-length') || '0');
-      let downloaded = 0;
-      const chunks = [];
+      const fileStream = fs.createWriteStream(jarPath);
       
-      response.body.on('data', (chunk) => {
-        chunks.push(chunk);
-        downloaded += chunk.length;
-        if (total) {
-          downloadProgress.set(serverId, Math.round((downloaded / total) * 100));
-        }
-      });
+      // Use pipeline for robust stream handling and automatic resource cleanup
+      await pipeline(
+        Readable.fromWeb(response.body),
+        fileStream
+      );
       
-      await new Promise((resolve, reject) => {
-        response.body.on('end', resolve);
-        response.body.on('error', reject);
-      });
-      
-      const buffer = Buffer.concat(chunks);
-      fs.writeFileSync(jarPath, buffer);
-      downloadProgress.delete(serverId);
-      console.log(`Downloaded ${jarPath} (${buffer.length} bytes)`);
+      console.log(`Successfully downloaded ${jarPath}`);
     } catch (err) {
       console.error(`Download failed: ${err.message}`);
+      // Clean up partial file on failure
+      if (fs.existsSync(jarPath)) fs.unlinkSync(jarPath);
       throw err;
     }
->>>>>>> d143d7e8ebb7df292d809f4c74791a3322142250
+    downloadProgress.delete(serverId);
   }
   
   return jarPath;
@@ -726,8 +683,6 @@ app.get('/api/auth/verify', authMiddleware, (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', servers: servers.size });
 });
-
-// Protected routes below
 
 const httpServer = createServer(app);
 const wss = new WebSocketServer({ server: httpServer });
