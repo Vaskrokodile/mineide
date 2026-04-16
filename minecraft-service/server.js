@@ -47,33 +47,55 @@ const MINECRAFT_VERSIONS = [
 const SERVER_TYPES = [
   { id: 'vanilla', name: 'Vanilla', description: 'Default Minecraft server' },
   { id: 'paper', name: 'Paper', description: 'Optimized for performance' },
-  { id: 'spigot', name: 'Spigot', description: 'High performance with plugins' },
+  { id: 'spigot', name: 'Spigot', description: 'High performance with plugins (uses Paper)' },
   { id: 'purpur', name: 'Purpur', description: 'Fully configurable server' },
 ];
 
-function getServerJarUrl(version, type = 'vanilla') {
-  if (type === 'vanilla') {
-    return `https://launcher.mojang.com/v1/objects/${getVanillaHash(version)}/server.jar`;
-  } else if (type === 'paper') {
-    return `https://api.papermc.io/v3/projects/paper/versions/${version}/builds/latest/downloads/paper-${version}-latest.jar`;
+async function getVanillaJarUrl(version) {
+  try {
+    const manifestRes = await fetch('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json');
+    const manifest = await manifestRes.json();
+    const versionInfo = manifest.versions.find(v => v.id === version);
+    
+    if (!versionInfo) return null;
+    
+    const versionRes = await fetch(versionInfo.url);
+    const versionData = await versionRes.json();
+    return versionData.downloads.server.url;
+  } catch (error) {
+    console.error('Error fetching Vanilla JAR URL:', error);
+    return null;
   }
-  return `https://launcher.mojang.com/v1/objects/${getVanillaHash(version)}/server.jar`;
 }
 
-function getVanillaHash(version) {
-  const hashes = {
-    '1.21.4': '14556eb1c5f227a5e4b2d2c8e3f3e5c8d0a7b6c5',
-    '1.21.3': '7ce4a5e8b3c2d1f0a9e8b7c6d5e4f3a2b1c0d9e',
-    '1.21.1': 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0',
-    '1.20.6': 'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1',
-    '1.20.4': 'c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2',
-    '1.20.2': 'd4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3',
-    '1.19.4': 'e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4',
-    '1.18.2': 'f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5',
-    '1.16.5': 'a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6',
-    '1.12.2': 'b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7',
-  };
-  return hashes[version] || 'a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6';
+async function getPaperJarUrl(version) {
+  try {
+    const buildsRes = await fetch(`https://api.papermc.io/v2/projects/paper/versions/${version}/builds`);
+    const buildsData = await buildsRes.json();
+    const latestBuild = buildsData.builds[buildsData.builds.length - 1].build;
+    return `https://api.papermc.io/v2/projects/paper/versions/${version}/builds/${latestBuild}/downloads/paper-${version}-${latestBuild}.jar`;
+  } catch (error) {
+    console.error('Error fetching Paper JAR URL:', error);
+    return null;
+  }
+}
+
+async function getPurpurJarUrl(version) {
+  return `https://api.purpurmc.org/v2/purpur/${version}/latest/download`;
+}
+
+async function getJarUrl(version, type) {
+  switch (type) {
+    case 'vanilla':
+      return await getVanillaJarUrl(version);
+    case 'paper':
+    case 'spigot': // Use Paper for Spigot as it's a drop-in replacement and easier to download
+      return await getPaperJarUrl(version);
+    case 'purpur':
+      return await getPurpurJarUrl(version);
+    default:
+      return await getVanillaJarUrl(version);
+  }
 }
 
 function getDefaultProperties(version) {
@@ -100,26 +122,21 @@ function getDefaultProperties(version) {
     'spawn-animals': true,
     'spawn-npcs': true,
     'pvp': true,
-    'spawn-protection': 16,
     'generate-structures': true,
     'op-permission-level': 4,
-    'allow-nether': true,
     'enable-rcon': false,
     'rcon.password': '',
     'rcon.port': 25575,
     'force-gamemode': false,
-    'hardcore': false,
     'white-list': false,
     'enforce-whitelist': false,
     'max-players': 20,
     'max-tick-time': 60000,
-    'view-distance': 10,
     'seed': '',
     'resource-pack': '',
     'resource-pack-sha1': '',
     'prevent-proxy-connections': false,
     'use-native-transport': true,
-    'online-mode': true,
   };
 }
 
@@ -161,37 +178,34 @@ async function downloadServerJar(serverId, version, type) {
   const jarPath = path.join(CACHE_DIR, `${type}-${version}.jar`);
   
   if (!fs.existsSync(jarPath)) {
-    let downloadUrl;
-    if (type === 'paper') {
-      const paperVersion = version.split('.')[0] + '.' + version.split('.')[1];
-      downloadUrl = `https://api.papermc.io/v3/projects/paper/versions/${paperVersion}/builds/latest/downloads/paper-${version}-latest.jar`;
-    } else {
-      downloadUrl = `https://launcher.mojang.com/mc/game/version/${version}/server/6a0d9bb71f2f74c3828c4a2d58c0fb5b2c3d9e1a/server.jar`;
+    const downloadUrl = await getJarUrl(version, type);
+    
+    if (!downloadUrl) {
+      throw new Error(`Could not find download URL for ${type} version ${version}`);
     }
     
-    console.log(`Downloading ${type} ${version}...`);
+    console.log(`Downloading ${type} ${version} from ${downloadUrl}...`);
     const response = await fetch(downloadUrl);
-    if (!response.ok) throw new Error(`Failed to download: ${response.statusText}`);
+    if (!response.ok) throw new Error(`Failed to download from ${downloadUrl}: ${response.statusText}`);
     
     const total = parseInt(response.headers.get('content-length') || '0');
     let downloaded = 0;
-    const chunks = [];
     
-    response.body.on('data', (chunk) => {
-      chunks.push(chunk);
-      downloaded += chunk.length;
+    const fileStream = fs.createWriteStream(jarPath);
+    const reader = response.body.getReader();
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      fileStream.write(value);
+      downloaded += value.length;
       if (total) {
         downloadProgress.set(serverId, Math.round((downloaded / total) * 100));
       }
-    });
+    }
     
-    await new Promise((resolve, reject) => {
-      response.body.on('end', resolve);
-      response.body.on('error', reject);
-    });
-    
-    const buffer = Buffer.concat(chunks);
-    fs.writeFileSync(jarPath, buffer);
+    fileStream.end();
     downloadProgress.delete(serverId);
   }
   
