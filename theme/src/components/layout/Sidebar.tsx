@@ -10,11 +10,13 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  Box,
 } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/servers', icon: Server, label: 'Servers' },
+  { to: '/minecraft', icon: Box, label: 'Minecraft' },
   { to: '/users', icon: Users, label: 'Users' },
   { to: '/nodes', icon: HardDrive, label: 'Nodes' },
   { to: '/locations', icon: Globe, label: 'Locations' },
