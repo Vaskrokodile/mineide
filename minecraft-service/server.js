@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';
 import { pipeline } from 'stream/promises';
 import { Readable } from 'stream';
+import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,9 +19,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const SERVERS_DIR = path.join(__dirname, 'servers');
-const CACHE_DIR = path.join(__dirname, 'cache');
-const BACKUPS_DIR = path.join(__dirname, 'backups');
+const DATA_PATH = process.env.DATA_PATH || __dirname;
+const SERVERS_DIR = process.env.SERVERS_DIR || path.join(DATA_PATH, 'servers');
+const CACHE_DIR = process.env.CACHE_DIR || path.join(DATA_PATH, 'cache');
+const BACKUPS_DIR = process.env.BACKUPS_DIR || path.join(DATA_PATH, 'backups');
 
 if (!fs.existsSync(SERVERS_DIR)) fs.mkdirSync(SERVERS_DIR, { recursive: true });
 if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
